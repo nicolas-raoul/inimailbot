@@ -9,7 +9,7 @@ on how to use these modules.
 '''
 
 # The Olson database is updated several times a year.
-OLSON_VERSION = '2010h'
+OLSON_VERSION = '2010l'
 VERSION = OLSON_VERSION
 # Version format for a patch release - only one so far.
 #VERSION = OLSON_VERSION + '.2'
@@ -554,6 +554,7 @@ all_timezones_unfiltered = \
  'America/Atikokan',
  'America/Atka',
  'America/Bahia',
+ 'America/Bahia_Banderas',
  'America/Barbados',
  'America/Belem',
  'America/Belize',
@@ -976,6 +977,7 @@ all_timezones_unfiltered = \
  'Pacific/Apia',
  'Pacific/Auckland',
  'Pacific/Chatham',
+ 'Pacific/Chuuk',
  'Pacific/Easter',
  'Pacific/Efate',
  'Pacific/Enderbury',
@@ -1001,6 +1003,7 @@ all_timezones_unfiltered = \
  'Pacific/Pago_Pago',
  'Pacific/Palau',
  'Pacific/Pitcairn',
+ 'Pacific/Pohnpei',
  'Pacific/Ponape',
  'Pacific/Port_Moresby',
  'Pacific/Rarotonga',
@@ -1118,6 +1121,7 @@ common_timezones_unfiltered = \
  'America/Asuncion',
  'America/Atikokan',
  'America/Bahia',
+ 'America/Bahia_Banderas',
  'America/Barbados',
  'America/Belem',
  'America/Belize',
@@ -1397,6 +1401,7 @@ common_timezones_unfiltered = \
  'Pacific/Apia',
  'Pacific/Auckland',
  'Pacific/Chatham',
+ 'Pacific/Chuuk',
  'Pacific/Easter',
  'Pacific/Efate',
  'Pacific/Enderbury',
@@ -1422,14 +1427,13 @@ common_timezones_unfiltered = \
  'Pacific/Pago_Pago',
  'Pacific/Palau',
  'Pacific/Pitcairn',
- 'Pacific/Ponape',
+ 'Pacific/Pohnpei',
  'Pacific/Port_Moresby',
  'Pacific/Rarotonga',
  'Pacific/Saipan',
  'Pacific/Tahiti',
  'Pacific/Tarawa',
  'Pacific/Tongatapu',
- 'Pacific/Truk',
  'Pacific/Wake',
  'Pacific/Wallis',
  'US/Alaska',
