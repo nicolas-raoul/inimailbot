@@ -123,7 +123,6 @@ class ExportCrashes(webapp.RequestHandler):
 	def get(self):
 		crashes_query = CrashReport.all()
 		bugId = self.request.get('bug_id')
-		page = int(self.request.get('page', 0))
 
 		crashes = []
 		if bugId:
@@ -228,6 +227,7 @@ application = webapp.WSGIApplication(
 			(r'^/ankidroid_triage/report_bugs/?.*', ReportBugs),
 			(r'^/ankidroid_triage/view_crash/?.*', ViewCrash),
 			(r'^/ankidroid_triage/view_bug/?.*', ViewBug),
+			(r'^/ankidroid_triage/export_bug_csv/?.*', ExportCrashes),
 			(r'^/ankidroid_triage/hospital/?.*', ViewHospital)],
 		debug=True)
 
