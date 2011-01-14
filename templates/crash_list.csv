@@ -1,0 +1,3 @@
+Crash id;Crash Title;Crash Time;Version;Android;Brand;Model;Product;Device;Available Memory;Bug id;Occurrences of bug
+{% for cr in crashes_list %};{{ cr.crashId }};{{ cr.key.id }};{{ cr.crashTime|date:"Y-m-d H:i:s T" }};{{ cr.versionName }};{{ cr.androidOSVersion }};{{ cr.brand }};{{ cr.model }};{{ cr.product }};{{ cr.device }};{{ cr.availableInternalMemory }};{{ cr.bugKey.key.id }};{{ cr.bugKey.count }}
+{% endfor %}

@@ -119,6 +119,27 @@ class ReportBugs(webapp.RequestHandler):
 
 
 
+class ExportCrashes(webapp.RequestHandler):
+	def get(self):
+		crashes_query = CrashReport.all()
+		bugId = self.request.get('bug_id')
+		page = int(self.request.get('page', 0))
+
+		crashes = []
+		if bugId:
+			bug = Bug.get_by_id(long(bugId))
+			crashes_query.filter("bugKey =", bug)
+		crashes_query.order("-crashTime")
+		total_results = crashes_query.count(1000000)
+
+		crashes = crashes_query.fetch(total_results, 0)
+		template_values = {'crashes_list': crashes,
+				'total_results': total_results,
+				'bug_id': bugId}
+		path = os.path.join(os.path.dirname(__file__), 'templates/crash_list.csv')
+		self.response.out.write(template.render(path, template_values))
+
+
 class ReportCrashes(webapp.RequestHandler):
 	def get(self):
 		hospital_query = HospitalizedReport.all()
