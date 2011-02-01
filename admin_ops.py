@@ -63,7 +63,7 @@ class AdminOps(webapp.RequestHandler):
 		m1 = re.search(r"Begin Stacktrace\s*(<br>\s*)*([^<\s][^<]*[^<\s])\s*<br>", body, re.M|re.U)
 		if m1 and m1.groups():# and m2 and m2.groups():
 			result1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
-		m2 = re.search(r"<br>\s*(at\scom\.ichi2\.anki\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
+		m2 = re.search(r"<br>\s*(at\scom\.ichi2\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
 				           #"<br>\s*(at\scom\.ichi2\.anki\..*?\S)\s*<br>", body, re.M|re.U)
 		if m2 and m2.groups():# and m2 and m2.groups():
 			result2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
