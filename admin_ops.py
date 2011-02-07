@@ -16,6 +16,7 @@
 # #####
 
 import os, sys, logging, re, hashlib
+from datetime import datetime
 from urllib import quote_plus
 from string import strip
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
@@ -32,6 +33,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.api.urlfetch import fetch
 from google.appengine.api.urlfetch import Error
 
+from receive_ankicrashes import AppVersion
 from receive_ankicrashes import CrashReport
 from receive_ankicrashes import HospitalizedReport
 from receive_ankicrashes import Bug
@@ -69,6 +71,18 @@ class AdminOps(webapp.RequestHandler):
 			result2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
 		return result1 + "\n" + result2
 	def get(self):
+		crashes_query = CrashReport.all()
+		crashes = []
+		crashes = crashes_query.fetch(5000)
+		tags = {}
+		for cr in crashes:
+			#AppVersion.insert(cr.versionName, cr.crashTime)
+			cr.adminProcessflag = 0
+			cr.put()
+			if cr.versionName in tags:
+				tags[cr.versionName] = tags[cr.versionName] + 1
+			else:
+				tags[cr.versionName] = 1
 
 		#bugs_query = Bug.all()
 		#bugs = []
@@ -77,11 +91,12 @@ class AdminOps(webapp.RequestHandler):
 		#	bg.delete()
 
 		crashes_query = CrashReport.all()
-		crashes_query.filter("bugKey =", None)
+		crashes_query.filter("versionName =", "0.5")
+		crashes_query.filter("crashTime <", datetime(2010, 12, 31, 23, 59, 59))
 		crashes = []
-		crashes = crashes_query.fetch(200)
+		crashes = crashes_query.fetch(20000)
 		results_list=[]
-		tags=set()
+		ci = 0
 		for cr in crashes:
 			#cr.linkToBug()
 			pass
@@ -93,7 +108,10 @@ class AdminOps(webapp.RequestHandler):
 			#cr.put()
 			#cr.linkToBug()
 			#if CrashReport.getCrashSignature(cr.report) != self.getCrashSignature2(cr.report):
-			results_list.append({'id': cr.key().id(), 'sig1': cr.crashId, 'sig2': str(cr.key().id())})
+			#cr.versionName = "0.5alpha1"
+			#cr.put()
+			ci = ci + 1
+			results_list.append({'id': cr.key().id(), 'crtime': cr.crashTime, 'version': cr.versionName, 'count': ci})
 		template_values = {'results_list': results_list, 'tags': tags}
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
 		self.response.out.write(template.render(path, template_values))

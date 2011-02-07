@@ -37,6 +37,27 @@ from pytz import timezone, UnknownTimeZoneError
 from BeautifulSoup import BeautifulStoneSoup
 from BeautifulSoup import BeautifulSoup
 
+class AppVersion(db.Model):
+	name = db.StringProperty(required=True)
+	lastIncident = db.DateTimeProperty(required=True)
+	crashCount = db.IntegerProperty(required=True)
+	activeFrom = db.DateTimeProperty(required=False)
+	@classmethod
+	def insert(cls, _name, _ts):
+		version_query = AppVersion.all()
+		version_query.filter('name =', _name)
+		versions = []
+		versions = version_query.fetch(1)
+		if versions:
+			version = versions[0]
+			if version.lastIncident < _ts:
+				version.lastIncident = _ts
+			version.crashCount = version.crashCount + 1
+			version.put()
+		else:
+			nv = AppVersion(name = _name, lastIncident = _ts, crashCount = 1)
+			nv.put()
+
 class HospitalizedReport(db.Model):
 	email = db.StringProperty(required=True)
 	crashId = db.StringProperty(required=True)
@@ -143,6 +164,7 @@ class CrashReport(db.Model):
 	availableInternalMemory = db.IntegerProperty()
 	tags = db.StringProperty()
 	bugKey = db.ReferenceProperty(Bug)
+	adminProcessflag = db.IntegerProperty(default=0)
 	def linkToBug(self):
 		results = db.GqlQuery("SELECT * FROM Bug WHERE signHash = :1", self.signHash)
 		bug = results.get()
@@ -380,6 +402,7 @@ class LogSenderHandler(InboundMailHandler):
 			if dupl_query.count(1) == 0:
 				cr.put()
 				cr.linkToBug()
+				AppVersion.insert(cr.versionName, cr.crashTime)
 			else:
 				dupl = dupl_query.fetch(1)[0]
 				logging.warning("Found duplicate with id: " + str(dupl.key().id()))
