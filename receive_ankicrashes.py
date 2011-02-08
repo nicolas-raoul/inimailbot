@@ -164,7 +164,8 @@ class CrashReport(db.Model):
 	availableInternalMemory = db.IntegerProperty()
 	tags = db.StringProperty()
 	bugKey = db.ReferenceProperty(Bug)
-	adminProcessflag = db.IntegerProperty(default=0)
+	entityVersion = db.IntegerProperty(default=1)
+	adminOpsflag = db.IntegerProperty(default=0)
 	def linkToBug(self):
 		results = db.GqlQuery("SELECT * FROM Bug WHERE signHash = :1", self.signHash)
 		bug = results.get()

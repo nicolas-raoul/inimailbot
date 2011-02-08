@@ -57,62 +57,56 @@ class ShowCrashBody(webapp.RequestHandler):
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops_show.html')
 		self.response.out.write(template.render(path, template_values))
 
+###
+# This class is used for bulk ad hoc operations in the DB, eg reparsing signatures, rebuilding the
+# bugs table or adding new properties to the entities.
+#
+# Due to limitations of time and memory in the AppEngine, we can't process all the entities in a
+# big loop, we have to work in batches. Each page loaded is a batch, following Next we can process
+# the next one, until all are done.
+##########
 class AdminOps(webapp.RequestHandler):
-	@classmethod
-	def getCrashSignature2(cls, body):
-		result1 = ''
-		result2 = ''
-		m1 = re.search(r"Begin Stacktrace\s*(<br>\s*)*([^<\s][^<]*[^<\s])\s*<br>", body, re.M|re.U)
-		if m1 and m1.groups():# and m2 and m2.groups():
-			result1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
-		m2 = re.search(r"<br>\s*(at\scom\.ichi2\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
-				           #"<br>\s*(at\scom\.ichi2\.anki\..*?\S)\s*<br>", body, re.M|re.U)
-		if m2 and m2.groups():# and m2 and m2.groups():
-			result2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
-		return result1 + "\n" + result2
+#	@classmethod
+#	def getCrashSignature2(cls, body):
+#		result1 = ''
+#		result2 = ''
+#		m1 = re.search(r"Begin Stacktrace\s*(<br>\s*)*([^<\s][^<]*[^<\s])\s*<br>", body, re.M|re.U)
+#		if m1 and m1.groups():# and m2 and m2.groups():
+#			result1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
+#		m2 = re.search(r"<br>\s*(at\scom\.ichi2\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
+#				           #"<br>\s*(at\scom\.ichi2\.anki\..*?\S)\s*<br>", body, re.M|re.U)
+#		if m2 and m2.groups():# and m2 and m2.groups():
+#			result2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
+#		return result1 + "\n" + result2
 	def get(self):
 		crashes_query = CrashReport.all()
 		crashes = []
-		crashes = crashes_query.fetch(5000)
+		page = int(self.request.get('page', 0))
+		total_results = crashes_query.count(1000000)
+		logging.info(total_results)
+		last_page = max((total_results - 1) // 500, 0)
+		logging.info(last_page)
+		if page > last_page:
+			page = last_page
+		crashes = crashes_query.fetch(500, page*500)
 		tags = {}
 		for cr in crashes:
 			#AppVersion.insert(cr.versionName, cr.crashTime)
-			cr.adminProcessflag = 0
-			cr.put()
+			#cr.entityVersion = 1
+			#cr.adminOpsflag = 0
+			#cr.put()
 			if cr.versionName in tags:
 				tags[cr.versionName] = tags[cr.versionName] + 1
 			else:
 				tags[cr.versionName] = 1
 
-		#bugs_query = Bug.all()
-		#bugs = []
-		#bugs = bugs_query.fetch(200)
-		#for bg in bugs:
-		#	bg.delete()
-
-		crashes_query = CrashReport.all()
-		crashes_query.filter("versionName =", "0.5")
-		crashes_query.filter("crashTime <", datetime(2010, 12, 31, 23, 59, 59))
-		crashes = []
-		crashes = crashes_query.fetch(20000)
 		results_list=[]
-		ci = 0
-		for cr in crashes:
-			#cr.linkToBug()
-			pass
-			#signa = CrashReport.getCrashSignature(cr.report)
-			#logging.debug("ID: " + str(cr.key().id()) + " sign: '" + signa + "'")
-			#cr.crashSignature = CrashReport.getCrashSignature(cr.report)
-			#cr.signHash = hashlib.sha256(cr.crashSignature).hexdigest()
-			#cr.bugKey = None
-			#cr.put()
-			#cr.linkToBug()
-			#if CrashReport.getCrashSignature(cr.report) != self.getCrashSignature2(cr.report):
-			#cr.versionName = "0.5alpha1"
-			#cr.put()
-			ci = ci + 1
-			results_list.append({'id': cr.key().id(), 'crtime': cr.crashTime, 'version': cr.versionName, 'count': ci})
-		template_values = {'results_list': results_list, 'tags': tags}
+		template_values = {'results_list': results_list,
+				'tags': tags,
+				'page': page,
+				'last_page': last_page,
+				'page_size': 500,
+				'total_results': total_results}
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
 		self.response.out.write(template.render(path, template_values))
 
