@@ -36,7 +36,9 @@
 		<br/>
 		<div class="above_table">
 			<div class="float_left">
-				<a href="/ankidroid_triage/admin_ops?page={{ page|add:1 }}">Next {{ page_size }} &gt;</a>
+			{% if page|lt:last_page %}
+				<a href="/ankidroid_triage/admin_ops?page={{ page|add:1 }}">Next {{ page_size }} (currently page {{ page }} of {{ last_page|add:1 }})</a>
+			{% endif %}
 			</div>
 			<div class="float_right">Total found: {{ total_results }}</div>
 		</div>

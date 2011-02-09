@@ -41,8 +41,8 @@ from BeautifulSoup import BeautifulSoup
 
 # Remove the standard version of Django
 #for k in [k for k in sys.modules if k.startswith('django')]:
-#    del sys.modules[k] 
-#webapp.template.register_template_library('templatetags.basic_math')
+#	del sys.modules[k]
+webapp.template.register_template_library('templatetags.basic_math')
 
 class ShowCrashBody(webapp.RequestHandler):
 	def get(self):
@@ -82,16 +82,24 @@ class AdminOps(webapp.RequestHandler):
 		crashes_query = CrashReport.all()
 		crashes = []
 		page = int(self.request.get('page', 0))
+		if page == 0:
+			# Reset appVersion counts
+			versions_query = AppVersion.all()
+			versions = versions_query.fetch(2000)
+			for v in versions:
+				v.crashCount = 0
+				v.put()
+
 		total_results = crashes_query.count(1000000)
 		logging.info(total_results)
-		last_page = max((total_results - 1) // 500, 0)
+		last_page = max((total_results - 1) // 400, 0)
 		logging.info(last_page)
 		if page > last_page:
 			page = last_page
-		crashes = crashes_query.fetch(500, page*500)
+		crashes = crashes_query.fetch(400, page*400)
 		tags = {}
 		for cr in crashes:
-			#AppVersion.insert(cr.versionName, cr.crashTime)
+			AppVersion.insert(cr.versionName, cr.crashTime)
 			#cr.entityVersion = 1
 			#cr.adminOpsflag = 0
 			#cr.put()
@@ -105,7 +113,7 @@ class AdminOps(webapp.RequestHandler):
 				'tags': tags,
 				'page': page,
 				'last_page': last_page,
-				'page_size': 500,
+				'page_size': 400,
 				'total_results': total_results}
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
 		self.response.out.write(template.render(path, template_values))

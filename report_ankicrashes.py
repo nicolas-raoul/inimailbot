@@ -30,6 +30,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.api.urlfetch import fetch
 from google.appengine.api.urlfetch import Error
 
+from receive_ankicrashes import AppVersion
 from receive_ankicrashes import CrashReport
 from receive_ankicrashes import HospitalizedReport
 from receive_ankicrashes import Bug
@@ -141,6 +142,10 @@ class ExportCrashes(webapp.RequestHandler):
 
 class ReportCrashes(webapp.RequestHandler):
 	def get(self):
+		versions_query = AppVersion.all()
+		versions_query.order("-activeFrom")
+		versions = versions_query.fetch(2000)
+
 		hospital_query = HospitalizedReport.all()
 		total_hospital = hospital_query.count()
 		hospital_query = HospitalizedReport.all()
@@ -163,6 +168,7 @@ class ReportCrashes(webapp.RequestHandler):
 			page = last_page
 		crashes = crashes_query.fetch(20, int(page)*20)
 		template_values = {'crashes_list': crashes,
+				'versions_list': versions,
 				'total_results': total_results,
 				'page_size': 20,
 				'page': page,

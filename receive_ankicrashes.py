@@ -45,17 +45,18 @@ class AppVersion(db.Model):
 	@classmethod
 	def insert(cls, _name, _ts):
 		version_query = AppVersion.all()
-		version_query.filter('name =', _name)
+		version_query.filter('name =', _name.strip())
 		versions = []
 		versions = version_query.fetch(1)
 		if versions:
 			version = versions[0]
-			if version.lastIncident < _ts:
-				version.lastIncident = _ts
+			if pytz.utc.localize(version.lastIncident) < pytz.utc.localize(_ts):
+				version.lastIncident = pytz.utc.localize(_ts)
+				logging.info("version " + version.name + " last incident: " + version.lastIncident.strftime(r"%d/%m/%Y %H:%M:%S %Z"))
 			version.crashCount = version.crashCount + 1
 			version.put()
 		else:
-			nv = AppVersion(name = _name, lastIncident = _ts, crashCount = 1)
+			nv = AppVersion(name = _name.strip(), lastIncident = pytz.utc.localize(_ts), crashCount = 1)
 			nv.put()
 
 class HospitalizedReport(db.Model):
