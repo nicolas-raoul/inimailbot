@@ -83,11 +83,12 @@ class AdminOps(webapp.RequestHandler):
 		crashes = []
 		page = int(self.request.get('page', 0))
 		if page == 0:
-			# Reset appVersion counts
+			# Reset appVersion crashCount & lastIncident
 			versions_query = AppVersion.all()
 			versions = versions_query.fetch(2000)
 			for v in versions:
 				v.crashCount = 0
+				v.lastIncident = datetime(2000,1,1)
 				v.put()
 
 		total_results = crashes_query.count(1000000)
@@ -97,24 +98,48 @@ class AdminOps(webapp.RequestHandler):
 		if page > last_page:
 			page = last_page
 		crashes = crashes_query.fetch(400, page*400)
-		tags = {}
+		versionCounts = {}
+		versionLastIncidents = {}
 		for cr in crashes:
-			AppVersion.insert(cr.versionName, cr.crashTime)
+			#AppVersion.insert(cr.versionName, cr.crashTime)
 			#cr.entityVersion = 1
 			#cr.adminOpsflag = 0
 			#cr.put()
-			if cr.versionName in tags:
-				tags[cr.versionName] = tags[cr.versionName] + 1
+			vname = cr.versionName.strip()
+			if cr.versionName <> vname:
+				cr.versionName = vname
+				cr.put()
+			if vname in versionCounts:
+				versionCounts[vname] = versionCounts[vname] + 1
 			else:
-				tags[cr.versionName] = 1
+				versionCounts[vname] = 1
+
+			if cr.versionName in versionLastIncidents:
+				if versionLastIncidents[vname] < cr.crashTime:
+					versionLastIncidents[vname] = cr.crashTime
+			else:
+				versionLastIncidents[vname] = cr.crashTime
+
+		for vname in versionCounts:
+			versions_query = AppVersion.all()
+			versions_query.filter('name =', vname)
+			versions = versions_query.fetch(1)
+			if versions:
+				version = versions[0]
+				version.crashCount = version.crashCount + versionCounts[vname]
+				if version.lastIncident < versionLastIncidents[vname]:
+					version.lastIncident = versionLastIncidents[vname]
+				version.put()
+			else:
+				logging.info("missing version: " + vname)
 
 		results_list=[]
 		template_values = {'results_list': results_list,
-				'tags': tags,
+				'tags': versionCounts,
 				'page': page,
 				'last_page': last_page,
 				'page_size': 400,
-				'total_results': total_results}
+				'total_results': len(crashes)}
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
 		self.response.out.write(template.render(path, template_values))
 

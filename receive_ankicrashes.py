@@ -50,13 +50,15 @@ class AppVersion(db.Model):
 		versions = version_query.fetch(1)
 		if versions:
 			version = versions[0]
-			if pytz.utc.localize(version.lastIncident) < pytz.utc.localize(_ts):
-				version.lastIncident = pytz.utc.localize(_ts)
+			if _ts and _ts.tzinfo == None:
+				_ts = pytz.utc.localize(_ts)
+			if pytz.utc.localize(version.lastIncident) < _ts:
+				version.lastIncident = _ts
 				logging.info("version " + version.name + " last incident: " + version.lastIncident.strftime(r"%d/%m/%Y %H:%M:%S %Z"))
 			version.crashCount = version.crashCount + 1
 			version.put()
 		else:
-			nv = AppVersion(name = _name.strip(), lastIncident = pytz.utc.localize(_ts), crashCount = 1)
+			nv = AppVersion(name = _name.strip(), lastIncident = _ts, crashCount = 1)
 			nv.put()
 
 class HospitalizedReport(db.Model):
@@ -317,7 +319,7 @@ class CrashReport(db.Model):
 		if hospital_reason:
 			return hospital_reason
 		self.packageName = self.parseSimpleValue(self.report, "PackageName")
-		self.versionName = self.parseSimpleValue(self.report, "VersionName")
+		self.versionName = self.parseSimpleValue(self.report, "VersionName").strip()
 		self.crashSignature = signature
 		self.signHash = hashlib.sha256(signature).hexdigest()
 		self.crashTime = crash_ts
