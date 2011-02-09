@@ -144,7 +144,9 @@ class ReportCrashes(webapp.RequestHandler):
 	def get(self):
 		versions_query = AppVersion.all()
 		versions_query.order("-activeFrom")
-		versions = versions_query.fetch(2000)
+		versions_objs = versions_query.fetch(2000)
+		versions = [v.name for v in versions_objs]
+		versions.insert(0, "all")
 
 		hospital_query = HospitalizedReport.all()
 		total_hospital = hospital_query.count()
@@ -155,11 +157,16 @@ class ReportCrashes(webapp.RequestHandler):
 		crashes_query = CrashReport.all()
 		bugId = self.request.get('bug_id')
 		page = int(self.request.get('page', 0))
+		selectedVersion = self.request.get('filter_version', "all")
+		includeNewerVersions = self.request.get('include_newer_versions', "1")
+		logging.info("version: " + selectedVersion)
 
 		crashes = []
 		if bugId:
 			bug = Bug.get_by_id(long(bugId))
 			crashes_query.filter("bugKey =", bug)
+		if selectedVersion != "all":
+			crashes_query.filter("versionName =", selectedVersion)
 		crashes_query.order("-crashTime")
 		total_results = crashes_query.count(1000000)
 		last_page = max((total_results - 1) // 20, 0)
@@ -169,6 +176,8 @@ class ReportCrashes(webapp.RequestHandler):
 		crashes = crashes_query.fetch(20, int(page)*20)
 		template_values = {'crashes_list': crashes,
 				'versions_list': versions,
+				'filter_version': selectedVersion,
+				'include_newer_versions': includeNewerVersions,
 				'total_results': total_results,
 				'page_size': 20,
 				'page': page,

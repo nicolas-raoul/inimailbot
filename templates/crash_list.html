@@ -40,6 +40,20 @@
 		<br>
 		{% endif %}
 
+		<form name="filter_parameters" method="get" action="report_crashes">
+			{% if bug_id %}
+			<input type="hidden" name="bug_id" value="{{ bug_id }}">
+			{% endif %}
+			<div id="query_settings">Filter on version
+				<select name="filter_version" onchange="document.filter_parameters.submit()">
+					{% for v in versions_list %}
+					<option value="{{ v }}"{% ifequal filter_version v %} selected="selected"{% endifequal %}>{{ v }}</option>
+					{% endfor %}
+				</select>
+				(<input type="checkbox" name="include_newer_versions" value="{{ include_newer_versions }}">and later</input>)
+			</div>
+		</form>
+		
 		<div class="above_table">
 			<div class="float_left">
 			{% if last_page|gt:0 %}
