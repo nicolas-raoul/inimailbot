@@ -16,6 +16,7 @@
 # #####
 
 import os, logging, re
+from operator import attrgetter
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 from google.appengine.dist import use_library
@@ -98,18 +99,52 @@ class ViewCrash(webapp.RequestHandler):
 
 class ReportBugs(webapp.RequestHandler):
 	def get(self):
-		bugs_query = Bug.all()
-		page = int(self.request.get('page', 0))
+		versions_query = AppVersion.all()
+		versions_query.order("-activeFrom")
+		versions_objs = versions_query.fetch(2000)
+		versions = [v.name for v in versions_objs]
+		versions.insert(0, "all")
+		selectedVersion = self.request.get('filter_version', "all")
 
 		bugs = []
-		bugs_query.order("-count")
-		total_results = bugs_query.count(1000000)
-		last_page = max((total_results - 1) // 20, 0)
+		page = int(self.request.get('page', 0))
+		if selectedVersion != "all":
+			crashes = []
+			bugs_map = {}
+			crashes_query = CrashReport.all()
+			crashes_query.filter("versionName =", selectedVersion)
+			crashes = crashes_query.fetch(1000000)
+			for cr in crashes:
+				if cr.bugKey.key().id() in bugs_map:
+					bugs_map[cr.bugKey.key().id()].count += 1
+					if bugs_map[cr.bugKey.key().id()].lastIncident < cr.crashTime:
+						bugs_map[cr.bugKey.key().id()].lastIncident = cr.crashTime
+				else:
+					bug = cr.bugKey
+					bug.count = 1
+					bug.lastIncident = cr.crashTime
+					bugs_map[cr.bugKey.key().id()] = bug
+			unsorted_bugs = bugs_map.values()
+			bugs = sorted(unsorted_bugs, key=attrgetter('count'), reverse=True)
+			total_results = len(bugs)
+			last_page = max((total_results - 1) // 20, 0)
+			if page > last_page:
+				page = last_page
+			# trim results to a single page
+			bugs[(page+1)*20:] = []
+			bugs[0:page*20] = []
+		else:
+			bugs_query = Bug.all()
+			bugs_query.order("-count")
+			total_results = bugs_query.count(1000000)
+			last_page = max((total_results - 1) // 20, 0)
+			if page > last_page:
+				page = last_page
+			bugs = bugs_query.fetch(20, int(page)*20)
 
-		if page > last_page:
-			page = last_page
-		bugs = bugs_query.fetch(20, int(page)*20)
 		template_values = {'bugs_list': bugs,
+				'versions_list': versions,
+				'filter_version': selectedVersion,
 				'total_results': total_results,
 				'page_size': 20,
 				'page': page,
@@ -158,7 +193,6 @@ class ReportCrashes(webapp.RequestHandler):
 		bugId = self.request.get('bug_id')
 		page = int(self.request.get('page', 0))
 		selectedVersion = self.request.get('filter_version', "all")
-		includeNewerVersions = self.request.get('include_newer_versions', "1")
 		logging.info("version: " + selectedVersion)
 
 		crashes = []
@@ -177,7 +211,6 @@ class ReportCrashes(webapp.RequestHandler):
 		template_values = {'crashes_list': crashes,
 				'versions_list': versions,
 				'filter_version': selectedVersion,
-				'include_newer_versions': includeNewerVersions,
 				'total_results': total_results,
 				'page_size': 20,
 				'page': page,
