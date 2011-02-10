@@ -265,11 +265,11 @@ class CrashReport(db.Model):
 		signLine1 = ''
 		signLine2 = ''
 		m1 = re.search(r"Begin Stacktrace\s*(<br>\s*)*([^<\s][^<]*[^<\s])\s*<br>", body, re.M|re.U)
-		if m1:
-			signLine1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
+		#if m1:
+		#	signLine1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
 		m2 = re.search(r"<br>\s*(at\scom\.(ichi2|mindprod|samskivert|tomgibara)\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
-		if m2:
-			signLine2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
+		#if m2:
+		#	signLine2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
 		return signLine1 + "\n" + signLine2
 	#m = re.search(r".*<br>\s*(.*?com\.ichi2\.anki\..*?)<br>", body, re.M|re.U)
 		#if m and m.groups():
@@ -389,6 +389,8 @@ class LogSenderHandler(InboundMailHandler):
 			body = m.group(1)
 		# Strip all tags except <br>
 		body = re.sub(r'<(?!br/?>)[^>]+>', '', body)
+		# Strip tabs of the form &#09;
+		body = re.sub(r'&#0?9;', ' ', body)
 		cr = CrashReport(email = mail_message.sender, crashId = subject, report = body)
 		hospital_reason = cr.parseReport()
 		if hospital_reason:

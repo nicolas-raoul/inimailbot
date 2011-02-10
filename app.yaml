@@ -34,3 +34,6 @@ handlers:
 inbound_services:
 - mail
 
+builtins:
+- datastore_admin: on
+
