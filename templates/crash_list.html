@@ -29,7 +29,11 @@
 			<div class="float_right">
 				Crashes Report
 				&nbsp;
+			{% if filter_version %}
+				<a href="/ankidroid_triage/report_bugs?filter_version={{ filter_version }}">Bugs Report</a>
+			{% else %}
 				<a href="/ankidroid_triage/report_bugs">Bugs Report</a>
+			{% endif %}
 			</div>
 		</div>
 		<br/>
@@ -58,25 +62,25 @@
 			{% if last_page|gt:0 %}
 				{% if page|gt:0 %}
 					{% if bug_id %}
-				<a href="/ankidroid_triage/report_crashes?bug_id={{ bug_id }}&page=0">&lt;&lt; First {{ page_size }}</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;bug_id={{ bug_id }}&page=0">&lt;&lt; First {{ page_size }}</a>
 				&nbsp;
-				<a href="/ankidroid_triage/report_crashes?bug_id={{ bug_id }}&page={{ page|sub:1 }}">&lt; Previous {{ page_size }}</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;bug_id={{ bug_id }}&page={{ page|sub:1 }}">&lt; Previous {{ page_size }}</a>
 					{% else %}
-				<a href="/ankidroid_triage/report_crashes?page=0">&lt;&lt; First {{ page_size }}</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;page=0">&lt;&lt; First {{ page_size }}</a>
 				&nbsp;
-				<a href="/ankidroid_triage/report_crashes?page={{ page|sub:1 }}">&lt; Previous {{ page_size }}</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;page={{ page|sub:1 }}">&lt; Previous {{ page_size }}</a>
 					{% endif %}
 				&nbsp;
 				{% endif %}
 				{% if page|lt:last_page %}
 					{% if bug_id %}
-				<a href="/ankidroid_triage/report_crashes?bug_id={{ bug_id }}&page={{ page|add:1 }}">Next {{ page_size }} &gt;</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;bug_id={{ bug_id }}&page={{ page|add:1 }}">Next {{ page_size }} &gt;</a>
 				&nbsp;
-				<a href="/ankidroid_triage/report_crashes?bug_id={{ bug_id }}&page={{ last_page }}">Last {{ total_results|sub:1|mod:page_size|add:1 }} &gt;&gt;</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;bug_id={{ bug_id }}&page={{ last_page }}">Last {{ total_results|sub:1|mod:page_size|add:1 }} &gt;&gt;</a>
 					{% else %}
-				<a href="/ankidroid_triage/report_crashes?page={{ page|add:1 }}">Next {{ page_size }} &gt;</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;page={{ page|add:1 }}">Next {{ page_size }} &gt;</a>
 				&nbsp;
-				<a href="/ankidroid_triage/report_crashes?page={{ last_page }}">Last {{ total_results|sub:1|mod:page_size|add:1 }} &gt;&gt;</a>
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}&amp;page={{ last_page }}">Last {{ total_results|sub:1|mod:page_size|add:1 }} &gt;&gt;</a>
 					{% endif %}
 				{% endif %}
 			{% endif %}

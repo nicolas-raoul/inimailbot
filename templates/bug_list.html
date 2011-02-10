@@ -27,11 +27,19 @@
 		<div class="title_line">
 			<div class="title float_left">Bugs report</div>
 			<div class="float_right">
+			{% if filter_version %}
+				<a href="/ankidroid_triage/report_crashes?filter_version={{ filter_version }}">Crashes Report</a>
+			{% else %}
 				<a href="/ankidroid_triage/report_crashes">Crashes Report</a>
+			{% endif %}
 				&nbsp;
 				Bugs Report
 				&nbsp;
+			{% if filter_version %}
+				<a href="/ankidroid_triage/export_bug_csv?filter_version={{ filter_version }}">Export to CSV</a>
+			{% else %}
 				<a href="/ankidroid_triage/export_bug_csv">Export to CSV</a>
+			{% endif %}
 			</div>
 		</div>
 		<br/>
