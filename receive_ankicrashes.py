@@ -338,9 +338,6 @@ class CrashReport(db.Model):
 			logging.warning("Hospitalizing message: Failed in parsing available internal memory: '" + self.parseSimpleValue(self.report, "AvailableInternalMemory") + "'")
 			return "avail_mem_parse_error"
 		self.tags = self.parseSimpleValue(self.report, "Tags")
-		self.linked = False
-		self.bugId = 0
-		self.issueLink = None
 		#self.put()
 		return ""
 

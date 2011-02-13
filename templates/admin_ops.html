@@ -37,7 +37,7 @@
 		<div class="above_table">
 			<div class="float_left">
 			{% if page|lt:last_page %}
-				<a href="/ankidroid_triage/admin_ops?page={{ page|add:1 }}">Next {{ page_size }} (currently page {{ page }} of {{ last_page|add:1 }})</a>
+			<a href="/ankidroid_triage/admin_ops{{ op_link }}?page={{ page|add:1 }}">Next {{ page_size }} (currently page {{ page }} of {{ last_page|add:1 }})</a>
 			{% endif %}
 			</div>
 			<div class="float_right">Total found: {{ total_results }}</div>
@@ -46,33 +46,12 @@
 		<table>
 			<thead>
 				<tr>
-					<th>ID</th>
-					<th>Crash time</th>
-					<th>Version</th>
-					<th>Count</th>
+					<th>{{ column_key }}</th>
+					<th>{{ column_value }}</th>
 				</tr>
 			</thead>
 			<tbody>
-				{% for rs in results_list %}
-				<tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
-					<td>{{ rs.id }}</td>
-					<td>{{ rs.crtime }}</td>
-					<td>{{ rs.version }}</td>
-					<td>{{ rs.count }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-		<hr>
-		<table>
-			<thead>
-				<tr>
-					<th>Version</th>
-					<th>Count</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key, value in tags.items %}
+				{% for key, value in values.items %}
 				<tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
 					<td>{{ key }}</td>
 					<td>{{ value }}</td>

@@ -65,20 +65,10 @@ class ShowCrashBody(webapp.RequestHandler):
 # big loop, we have to work in batches. Each page loaded is a batch, following Next we can process
 # the next one, until all are done.
 ##########
-class AdminOps(webapp.RequestHandler):
-#	@classmethod
-#	def getCrashSignature2(cls, body):
-#		result1 = ''
-#		result2 = ''
-#		m1 = re.search(r"Begin Stacktrace\s*(<br>\s*)*([^<\s][^<]*[^<\s])\s*<br>", body, re.M|re.U)
-#		if m1 and m1.groups():# and m2 and m2.groups():
-#			result1 = re.sub(r"\$[a-fA-F0-9@]*", "", m1.group(2))
-#		m2 = re.search(r"<br>\s*(at\scom\.ichi2\.[^<]*[^<\s])\s*<br>", body, re.M|re.U)
-#				           #"<br>\s*(at\scom\.ichi2\.anki\..*?\S)\s*<br>", body, re.M|re.U)
-#		if m2 and m2.groups():# and m2 and m2.groups():
-#			result2 = re.sub(r"\$[a-fA-F0-9@]*", "", m2.group(1))
-#		return result1 + "\n" + result2
+class RebuildVersions(webapp.RequestHandler):
+	batch_size = 400
 	def get(self):
+		batch = RebuildVersions.batch_size
 		crashes_query = CrashReport.all()
 		crashes = []
 		page = int(self.request.get('page', 0))
@@ -92,19 +82,14 @@ class AdminOps(webapp.RequestHandler):
 				v.put()
 
 		total_results = crashes_query.count(1000000)
-		logging.info(total_results)
-		last_page = max((total_results - 1) // 400, 0)
-		logging.info(last_page)
+		logging.info("Admin ops - total_results: ", total_results)
+		last_page = max((total_results - 1) // batch, 0)
 		if page > last_page:
 			page = last_page
-		crashes = crashes_query.fetch(400, page*400)
+		crashes = crashes_query.fetch(batch, page * batch)
 		versionCounts = {}
 		versionLastIncidents = {}
 		for cr in crashes:
-			#AppVersion.insert(cr.versionName, cr.crashTime)
-			#cr.entityVersion = 1
-			#cr.adminOpsflag = 0
-			#cr.put()
 			vname = cr.versionName.strip()
 			if cr.versionName <> vname:
 				cr.versionName = vname
@@ -133,19 +118,73 @@ class AdminOps(webapp.RequestHandler):
 			else:
 				logging.info("missing version: " + vname)
 
-		results_list=[]
-		template_values = {'results_list': results_list,
+		template_values = {
 				'tags': versionCounts,
 				'page': page,
 				'last_page': last_page,
-				'page_size': 400,
+				'page_size': batch,
+				'op_link': 'rebuild_versions',
+				'column_key': 'Version',
+				'column_value': 'Count',
+				'total_results': len(crashes)}
+		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
+		self.response.out.write(template.render(path, template_values))
+
+class RebuildBugs(webapp.RequestHandler):
+	batch_size = 400
+	def get(self):
+		batch = RebuildBugs.batch_size
+		crashes_query = CrashReport.all()
+		crashes = []
+		page = int(self.request.get('page', 0))
+		if page == 0:
+			# Remove Bugs
+			bugs_query = Bug.all()
+			bugs = bugs_query.fetch(2000)
+			for b in bugs:
+				b.delete()
+
+		total_results = crashes_query.count(1000000)
+		last_page = max((total_results - 1) // batch, 0)
+		if page > last_page:
+			page = last_page
+		logging.info("Admin ops - total_results: ", str(total_results) + ", page: " + str(page) + "/" + str(last_page))
+		crashes = crashes_query.fetch(batch, page * batch)
+		valueSet = {}
+		valueSet["unlinked"] = 0
+		# Main ops loop
+		for cr in crashes:
+			cr.bugKey = None
+			cr.crashSignature = CrashReport.getCrashSignature(cr.report)
+			cr.put()
+			if !cr.crashSignature:
+				logging.warning("Can't get signature for CrashReport: " + str(cr.key().id()))
+				valueSet["unlinked"] = valueSet["unlinked"] + 1
+			else:
+				cr.signHash = hashlib.sha256(cr.crashSignature).hexdigest()
+				cr.linkToBug()
+				bugId = str(cr.bugKey().id())
+				if bugId in valueSet:
+					valueSet[bugId] = valueSet[bugId] + 1
+				else:
+					valueSet[bugId] = 1
+		template_values = {
+				'values': valueSet,
+				'page': page,
+				'last_page': last_page,
+				'page_size': batch,
+				'op_link': 'rebuild_bugs',
+				'column_key': 'BugId',
+				'column_value': 'Count',
 				'total_results': len(crashes)}
 		path = os.path.join(os.path.dirname(__file__), 'templates/admin_ops.html')
 		self.response.out.write(template.render(path, template_values))
 
 application = webapp.WSGIApplication(
 		[(r'^/ankidroid_triage/admin_show.*$', ShowCrashBody),
-		(r'^/ankidroid_triage/admin_ops$', AdminOps)],
+		(r'^/ankidroid_triage/admin_ops/rebuild_versions$', RebuildVersions),
+		(r'^/ankidroid_triage/admin_ops/rescan_issues$', RescanIssues),
+		(r'^/ankidroid_triage/admin_ops/rebuild_bugs$', RebuildBugs)],
 		debug=True)
 
 def main():
